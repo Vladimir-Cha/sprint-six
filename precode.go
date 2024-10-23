@@ -49,7 +49,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	// сериализуем данные из слайса tasks
 	resp, err := json.Marshal(tasks)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, `"Задача не найдена"`, http.StatusInternalServerError)
 		return
 	}
 
@@ -65,12 +65,17 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, `"Некорректный запрос"`, http.StatusBadRequest)
 		return
 	}
 
 	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, `"Некорректный запрос"`, http.StatusBadRequest)
+		return
+	}
+
+	if _, ok := tasks[task.ID]; ok {
+		http.Error(w, "Ошибка: ID уже существует", http.StatusForbidden)
 		return
 	}
 
@@ -86,13 +91,13 @@ func getTaskID(w http.ResponseWriter, r *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Задача не найдена", http.StatusNoContent)
+		http.Error(w, `"Задача не найдена"`, http.StatusBadRequest)
 		return
 	}
 
 	resp, err := json.Marshal(task)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, `"Задача не найдена"`, http.StatusInternalServerError)
 		return
 	}
 
